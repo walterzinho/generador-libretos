@@ -95,9 +95,13 @@ interface GeminiResponse {
 export async function POST(req: NextRequest) {
   try {
     const settings = await db.settings.findUnique({ where: { id: 'main' } });
+    const provider = settings?.provider || 'google';
 
-    if (!settings?.geminiApiKey) {
+    if (provider === 'google' && !settings?.geminiApiKey) {
       return NextResponse.json({ error: 'API Key de Gemini no configurada. Ve a Configuración.' }, { status: 400 });
+    }
+    if (provider === 'openrouter' && !settings?.openRouterKey) {
+      return NextResponse.json({ error: 'API Key de OpenRouter no configurada. Ve a Configuración.' }, { status: 400 });
     }
 
     const body = await req.json();
@@ -117,46 +121,91 @@ export async function POST(req: NextRequest) {
       playlist: playlist || '',
     });
 
-    const model = settings.geminiModel || 'gemini-2.5-flash';
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${settings.geminiApiKey}`;
+    const jsonFormatHint = '\n\nResponde SIEMPRE en este formato JSON exacto:\n{\n  "entradas": [\n    {"numero": 1, "texto": "..."},\n    {"numero": 2, "texto": "..."},\n    {"numero": 3, "texto": "..."},\n    {"numero": 4, "texto": "..."},\n    {"numero": 5, "texto": "..."}\n  ],\n  "puentes": [\n    {"numero": 1, "texto": "..."},\n    ...\n  ],\n  "puentesLargos": [\n    {"numero": 1, "texto": "..."},\n    ...\n  ],\n  "salidas": [\n    {"numero": 1, "texto": "..."},\n    {"numero": 2, "texto": "..."},\n    {"numero": 3, "texto": "..."},\n    {"numero": 4, "texto": "..."},\n    {"numero": 5, "texto": "..."}\n  ]\n}\n\nSi no se pidieron puentes largos, incluye "puentesLargos" como array vacío [].';
 
-    const geminiBody = {
-      system_instruction: {
-        parts: [{ text: SYSTEM_PROMPT }],
-      },
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            {
-              text: userPrompt + '\n\nResponde SIEMPRE en este formato JSON exacto:\n{\n  "entradas": [\n    {"numero": 1, "texto": "..."},\n    {"numero": 2, "texto": "..."},\n    {"numero": 3, "texto": "..."},\n    {"numero": 4, "texto": "..."},\n    {"numero": 5, "texto": "..."}\n  ],\n  "puentes": [\n    {"numero": 1, "texto": "..."},\n    ...\n  ],\n  "puentesLargos": [\n    {"numero": 1, "texto": "..."},\n    ...\n  ],\n  "salidas": [\n    {"numero": 1, "texto": "..."},\n    {"numero": 2, "texto": "..."},\n    {"numero": 3, "texto": "..."},\n    {"numero": 4, "texto": "..."},\n    {"numero": 5, "texto": "..."}\n  ]\n}\n\nSi no se pidieron puentes largos, incluye "puentesLargos" como array vacío [].',
-            },
-          ],
+    let textContent: string | undefined;
+
+    if (provider === 'openrouter') {
+      // OpenRouter uses OpenAI-compatible format
+      const orModel = settings.geminiModel || 'gemini-2.5-flash';
+      const modelMap: Record<string, string> = {
+        'gemini-2.5-flash': 'google/gemini-2.5-flash-preview',
+        'gemini-2.0-flash': 'google/gemini-2.0-flash-001',
+        'gemini-1.5-flash': 'google/gemini-1.5-flash',
+        'gemini-2.5-pro': 'google/gemini-2.5-pro-preview',
+      };
+      const orModelId = modelMap[orModel] || modelMap['gemini-2.5-flash'];
+
+      const orResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${settings.openRouterKey}`,
+          'HTTP-Referer': 'https://vocecampesinas.co',
+          'X-Title': 'Voces Campesinas - Generador de Libretos',
         },
-      ],
-      generationConfig: {
-        temperature: 0.8,
-        maxOutputTokens: 8192,
-        responseMimeType: 'application/json',
-      },
-    };
+        body: JSON.stringify({
+          model: orModelId,
+          messages: [
+            { role: 'system', content: SYSTEM_PROMPT },
+            { role: 'user', content: userPrompt + jsonFormatHint },
+          ],
+          temperature: 0.8,
+          max_tokens: 8192,
+          response_format: { type: 'json_object' },
+        }),
+      });
 
-    const response = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(geminiBody),
-    });
+      if (!orResponse.ok) {
+        const errText = await orResponse.text();
+        return NextResponse.json({ error: `Error de OpenRouter API (${orResponse.status}): ${errText}` }, { status: orResponse.status });
+      }
 
-    if (!response.ok) {
-      const errText = await response.text();
-      return NextResponse.json({ error: `Error de Gemini API (${response.status}): ${errText}` }, { status: response.status });
-    }
+      const orData = await orResponse.json();
+      textContent = orData.choices?.[0]?.message?.content;
 
-    const data: GeminiResponse = await response.json();
-    const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!textContent) {
+        return NextResponse.json({ error: 'OpenRouter no devolvió contenido. Intenta de nuevo.' }, { status: 500 });
+      }
+    } else {
+      // Google AI Studio
+      const model = settings.geminiModel || 'gemini-2.5-flash';
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${settings.geminiApiKey}`;
 
-    if (!textContent) {
-      return NextResponse.json({ error: 'Gemini no devolvió contenido. Intenta de nuevo.' }, { status: 500 });
+      const geminiBody = {
+        system_instruction: {
+          parts: [{ text: SYSTEM_PROMPT }],
+        },
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: userPrompt + jsonFormatHint }],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.8,
+          maxOutputTokens: 8192,
+          responseMimeType: 'application/json',
+        },
+      };
+
+      const response = await fetch(geminiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(geminiBody),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        return NextResponse.json({ error: `Error de Gemini API (${response.status}): ${errText}` }, { status: response.status });
+      }
+
+      const data: GeminiResponse = await response.json();
+      textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (!textContent) {
+        return NextResponse.json({ error: 'Gemini no devolvió contenido. Intenta de nuevo.' }, { status: 500 });
+      }
     }
 
     let parsed: {

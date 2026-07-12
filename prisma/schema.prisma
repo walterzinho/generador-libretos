@@ -9,8 +9,10 @@ datasource db {
 
 model Settings {
   id            String @id @default("main")
+  provider      String @default("google")
   geminiApiKey  String?
   geminiModel   String @default("gemini-2.5-flash")
+  openRouterKey String?
   notionToken   String?
   notionDbId    String?
   notionPageId  String?

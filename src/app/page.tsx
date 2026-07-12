@@ -43,8 +43,10 @@ import {
 import { useToast } from '@/hooks/use-toast';
 
 interface ConfigStatus {
+  provider: string;
   geminiConfigured: boolean;
   geminiModel: string;
+  openRouterConfigured: boolean;
   notionConfigured: boolean;
   notionDbReady: boolean;
 }
@@ -84,8 +86,10 @@ export default function Home() {
 
   // Config state
   const [configStatus, setConfigStatus] = useState<ConfigStatus | null>(null);
+  const [provider, setProvider] = useState('openrouter');
   const [geminiKey, setGeminiKey] = useState('');
   const [geminiModel, setGeminiModel] = useState('gemini-2.5-flash');
+  const [openRouterKey, setOpenRouterKey] = useState('');
   const [notionToken, setNotionToken] = useState('');
   const [notionPageId, setNotionPageId] = useState('');
   const [configOpen, setConfigOpen] = useState(false);
@@ -121,6 +125,7 @@ export default function Home() {
       const data = await res.json();
       setConfigStatus(data);
       if (data.geminiModel) setGeminiModel(data.geminiModel);
+      if (data.provider) setProvider(data.provider);
     } catch {
       // silent
     }
@@ -155,7 +160,7 @@ export default function Home() {
       const res = await fetch('/api/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ geminiApiKey: geminiKey, geminiModel, notionToken: notionToken }),
+        body: JSON.stringify({ provider, geminiApiKey: geminiKey, geminiModel, openRouterKey, notionToken: notionToken }),
       });
       const data = await res.json();
       if (data.success) {
@@ -336,9 +341,15 @@ export default function Home() {
           <div className="flex items-center gap-2">
             {configStatus && (
               <div className="hidden sm:flex items-center gap-2 mr-2">
-                <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border ${configStatus.geminiConfigured ? 'bg-emerald-900/30 text-emerald-400 border-emerald-700/40' : 'bg-red-900/30 text-red-400 border-red-700/40'}`}>
-                  {configStatus.geminiConfigured ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                  Gemini
+                <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border ${
+                  configStatus.provider === 'openrouter'
+                    ? (configStatus.openRouterConfigured ? 'bg-emerald-900/30 text-emerald-400 border-emerald-700/40' : 'bg-red-900/30 text-red-400 border-red-700/40')
+                    : (configStatus.geminiConfigured ? 'bg-emerald-900/30 text-emerald-400 border-emerald-700/40' : 'bg-red-900/30 text-red-400 border-red-700/40')
+                }`}>
+                  {configStatus.provider === 'openrouter'
+                    ? (configStatus.openRouterConfigured ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />) 
+                    : (configStatus.geminiConfigured ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />)}
+                  {configStatus.provider === 'openrouter' ? 'OpenRouter' : 'Gemini'}
                 </span>
                 <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full border ${configStatus.notionDbReady ? 'bg-emerald-900/30 text-emerald-400 border-emerald-700/40' : configStatus.notionConfigured ? 'bg-amber-900/30 text-amber-400 border-amber-700/40' : 'bg-red-900/30 text-red-400 border-red-700/40'}`}>
                   {configStatus.notionDbReady ? <CheckCircle2 className="w-3 h-3" /> : configStatus.notionConfigured ? <AlertCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
@@ -361,26 +372,90 @@ export default function Home() {
                   </DialogTitle>
                 </DialogHeader>
                 <div className="space-y-6 pt-4">
-                  {/* Gemini API Key */}
+                  {/* Provider Selector */}
                   <div className="space-y-2">
-                    <Label htmlFor="geminiKey" className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-primary" />
-                      API Key de Google AI Studio
+                    <Label className="flex items-center gap-2">
+                      <Radio className="w-4 h-4 text-primary" />
+                      Proveedor de IA
                     </Label>
-                    <Input
-                      id="geminiKey"
-                      type="password"
-                      placeholder="AIzaSy..."
-                      value={geminiKey}
-                      onChange={(e) => setGeminiKey(e.target.value)}
-                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setProvider('openrouter')}
+                        className={`flex flex-col items-center p-3 rounded-lg border text-center transition-colors ${
+                          provider === 'openrouter'
+                            ? 'border-primary bg-primary/10 text-foreground'
+                            : 'border-border bg-muted/30 text-muted-foreground hover:border-border hover:bg-muted/50'
+                        }`}
+                      >
+                        <p className="text-sm font-medium">OpenRouter</p>
+                        <p className="text-xs opacity-70">Sin restricción de región</p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setProvider('google')}
+                        className={`flex flex-col items-center p-3 rounded-lg border text-center transition-colors ${
+                          provider === 'google'
+                            ? 'border-primary bg-primary/10 text-foreground'
+                            : 'border-border bg-muted/30 text-muted-foreground hover:border-border hover:bg-muted/50'
+                        }`}
+                      >
+                        <p className="text-sm font-medium">Google AI Studio</p>
+                        <p className="text-xs opacity-70">Directo (puede tener restricciones)</p>
+                      </button>
+                    </div>
                     <p className="text-xs text-muted-foreground">
-                      Consíguela en{' '}
-                      <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" className="text-primary hover:underline">
-                        aistudio.google.com/apikey
-                      </a>
+                      {provider === 'openrouter'
+                        ? 'OpenRouter funciona desde cualquier país. Te conecta con Gemini sin restricciones.'
+                        : 'Google AI Studio puede estar bloqueado según tu ubicación. Si da error 400, cambia a OpenRouter.'}
                     </p>
                   </div>
+
+                  <Separator />
+
+                  {/* API Key - conditional on provider */}
+                  {provider === 'openrouter' ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="openRouterKey" className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-primary" />
+                        API Key de OpenRouter
+                      </Label>
+                      <Input
+                        id="openRouterKey"
+                        type="password"
+                        placeholder="sk-or-v1-..."
+                        value={openRouterKey}
+                        onChange={(e) => setOpenRouterKey(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Crea una cuenta en{' '}
+                        <a href="https://openrouter.ai/keys" target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                          openrouter.ai/keys
+                        </a>
+                        {' '}— tiene crédito gratuito inicial y precios muy bajos.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label htmlFor="geminiKey" className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-primary" />
+                        API Key de Google AI Studio
+                      </Label>
+                      <Input
+                        id="geminiKey"
+                        type="password"
+                        placeholder="AIzaSy..."
+                        value={geminiKey}
+                        onChange={(e) => setGeminiKey(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Consíguela en{' '}
+                        <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                          aistudio.google.com/apikey
+                        </a>
+                      </p>
+                    </div>
+                  )}
 
                   {/* Gemini Model Selector */}
                   <div className="space-y-2">
