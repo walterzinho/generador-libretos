@@ -15,8 +15,8 @@ export async function GET() {
       notionConfigured: !!settings.notionToken,
       notionDbReady: !!settings.notionDbId,
     });
-  } catch {
-    return NextResponse.json({ error: 'Error al leer configuración' }, { status: 500 });
+  } catch (e) {
+    return NextResponse.json({ error: `Error al leer configuración: ${e}` }, { status: 500 });
   }
 }
 
@@ -52,7 +52,8 @@ export async function POST(req: NextRequest) {
         notionDbReady: !!updated.notionDbId,
       },
     });
-  } catch {
-    return NextResponse.json({ error: 'Error al guardar configuración' }, { status: 500 });
+  } catch (e) {
+    console.error('Error saving config:', e);
+    return NextResponse.json({ error: `Error al guardar configuración: ${e}` }, { status: 500 });
   }
 }
