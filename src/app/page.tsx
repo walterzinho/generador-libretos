@@ -44,6 +44,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface ConfigStatus {
   geminiConfigured: boolean;
+  geminiModel: string;
   notionConfigured: boolean;
   notionDbReady: boolean;
 }
@@ -84,6 +85,7 @@ export default function Home() {
   // Config state
   const [configStatus, setConfigStatus] = useState<ConfigStatus | null>(null);
   const [geminiKey, setGeminiKey] = useState('');
+  const [geminiModel, setGeminiModel] = useState('gemini-2.5-flash');
   const [notionToken, setNotionToken] = useState('');
   const [notionPageId, setNotionPageId] = useState('');
   const [configOpen, setConfigOpen] = useState(false);
@@ -118,6 +120,7 @@ export default function Home() {
       const res = await fetch('/api/config');
       const data = await res.json();
       setConfigStatus(data);
+      if (data.geminiModel) setGeminiModel(data.geminiModel);
     } catch {
       // silent
     }
@@ -152,7 +155,7 @@ export default function Home() {
       const res = await fetch('/api/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ geminiApiKey: geminiKey, notionToken: notionToken }),
+        body: JSON.stringify({ geminiApiKey: geminiKey, geminiModel, notionToken: notionToken }),
       });
       const data = await res.json();
       if (data.success) {
@@ -376,6 +379,42 @@ export default function Home() {
                       <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" className="text-primary hover:underline">
                         aistudio.google.com/apikey
                       </a>
+                    </p>
+                  </div>
+
+                  {/* Gemini Model Selector */}
+                  <div className="space-y-2">
+                    <Label htmlFor="geminiModel" className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-primary" />
+                      Modelo de Gemini
+                    </Label>
+                    <div className="grid grid-cols-1 gap-2">
+                      {[
+                        { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', desc: 'Más rápido, buen free tier' },
+                        { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', desc: 'Estable, amplio free tier' },
+                        { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', desc: 'Mayor disponibilidad free tier' },
+                        { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', desc: 'Mejor calidad, requiere pago' },
+                      ].map((m) => (
+                        <button
+                          key={m.value}
+                          type="button"
+                          onClick={() => setGeminiModel(m.value)}
+                          className={`flex items-center justify-between p-3 rounded-lg border text-left transition-colors ${
+                            geminiModel === m.value
+                              ? 'border-primary bg-primary/10 text-foreground'
+                              : 'border-border bg-muted/30 text-muted-foreground hover:border-border hover:bg-muted/50'
+                          }`}
+                        >
+                          <div>
+                            <p className="text-sm font-medium">{m.label}</p>
+                            <p className="text-xs opacity-70">{m.desc}</p>
+                          </div>
+                          {geminiModel === m.value && <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Si un modelo da error 429, cambia a otro. El free tier varía por región.
                     </p>
                   </div>
 

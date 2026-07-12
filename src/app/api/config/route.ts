@@ -9,6 +9,7 @@ export async function GET() {
     }
     return NextResponse.json({
       geminiConfigured: !!settings.geminiApiKey,
+      geminiModel: settings.geminiModel || 'gemini-2.5-flash',
       notionConfigured: !!settings.notionToken,
       notionDbReady: !!settings.notionDbId,
     });
@@ -20,7 +21,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { geminiApiKey, notionToken } = body;
+    const { geminiApiKey, notionToken, geminiModel } = body;
 
     let settings = await db.settings.findUnique({ where: { id: 'main' } });
     if (!settings) {
@@ -31,11 +32,12 @@ export async function POST(req: NextRequest) {
       where: { id: 'main' },
       data: {
         ...(geminiApiKey !== undefined && { geminiApiKey }),
+        ...(geminiModel !== undefined && { geminiModel }),
         ...(notionToken !== undefined && { notionToken }),
       },
     });
 
-    return NextResponse.json({ success: true, config: { geminiConfigured: !!updated.geminiApiKey, notionConfigured: !!updated.notionToken, notionDbReady: !!updated.notionDbId } });
+    return NextResponse.json({ success: true, config: { geminiConfigured: !!updated.geminiApiKey, geminiModel: updated.geminiModel || 'gemini-2.5-flash', notionConfigured: !!updated.notionToken, notionDbReady: !!updated.notionDbId } });
   } catch {
     return NextResponse.json({ error: 'Error al guardar configuración' }, { status: 500 });
   }

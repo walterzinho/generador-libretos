@@ -8,12 +8,13 @@ datasource db {
 }
 
 model Settings {
-  id           String @id @default("main")
-  geminiApiKey String?
-  notionToken  String?
-  notionDbId   String?
-  notionPageId String?
-  updatedAt    DateTime @updatedAt
+  id            String @id @default("main")
+  geminiApiKey  String?
+  geminiModel   String @default("gemini-2.5-flash")
+  notionToken   String?
+  notionDbId    String?
+  notionPageId  String?
+  updatedAt     DateTime @updatedAt
 }
 
 model Generation {
