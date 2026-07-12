@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Settings {
+  id           String @id @default("main")
+  geminiApiKey String?
+  notionToken  String?
+  notionDbId   String?
+  notionPageId String?
+  updatedAt    DateTime @updatedAt
+}
+
+model Generation {
+  id        String   @id @default(cuid())
+  franja    String
+  genero    String
+  duracion  String
+  playlist  String?
+  createdAt DateTime @default(now())
+
+  libretos Libreto[]
+}
+
+model Libreto {
+  id           String   @id @default(cuid())
+  generationId String
+  tipo         String
+  numero       Int
+  contenido    String
+  createdAt    DateTime @default(now())
+
+  generation Generation @relation(fields: [generationId], references: [id], onDelete: Cascade)
+}
