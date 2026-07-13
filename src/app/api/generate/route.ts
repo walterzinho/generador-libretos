@@ -168,43 +168,64 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'OpenRouter no devolvió contenido. Intenta de nuevo.' }, { status: 500 });
       }
     } else {
-      // Google AI Studio
+      // Google AI Studio - con retry como MensajesCortos
       const model = settings.geminiModel || 'gemini-2.5-flash';
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${settings.geminiApiKey}`;
+      const apiVersions = ['v1', 'v1beta'];
+      const fallbackModels = [model, 'gemini-2.5-flash'];
+      const uniqueModels = [...new Set(fallbackModels)];
+      let lastError = '';
 
-      const geminiBody = {
-        system_instruction: {
-          parts: [{ text: SYSTEM_PROMPT }],
-        },
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: userPrompt + jsonFormatHint }],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.8,
-          maxOutputTokens: 8192,
-          responseMimeType: 'application/json',
-        },
-      };
+      let resolved = false;
+      for (const tryModel of uniqueModels) {
+        if (resolved) break;
+        for (const apiVersion of apiVersions) {
+          if (resolved) break;
+          try {
+            const geminiUrl = `https://generativelanguage.googleapis.com/${apiVersion}/models/${tryModel}:generateContent?key=${settings.geminiApiKey}`;
 
-      const response = await fetch(geminiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(geminiBody),
-      });
+            const geminiBody = {
+              system_instruction: {
+                parts: [{ text: SYSTEM_PROMPT }],
+              },
+              contents: [
+                {
+                  role: 'user',
+                  parts: [{ text: userPrompt + jsonFormatHint }],
+                },
+              ],
+              generationConfig: {
+                temperature: 0.8,
+                maxOutputTokens: 8192,
+                responseMimeType: 'application/json',
+              },
+            };
 
-      if (!response.ok) {
-        const errText = await response.text();
-        return NextResponse.json({ error: `Error de Gemini API (${response.status}): ${errText}` }, { status: response.status });
+            const response = await fetch(geminiUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(geminiBody),
+            });
+
+            if (response.ok) {
+              const data: GeminiResponse = await response.json();
+              textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (textContent) resolved = true;
+            } else {
+              const errText = await response.text();
+              lastError = `Error ${response.status} con ${apiVersion}/${tryModel}: ${errText}`;
+              // Si es error de ubicación, seguir intentando
+              if (response.status === 400 || response.status === 429) continue;
+              // Otro error, parar
+              break;
+            }
+          } catch (e) {
+            lastError = `Error de conexión con ${apiVersion}/${tryModel}: ${e}`;
+          }
+        }
       }
 
-      const data: GeminiResponse = await response.json();
-      textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      if (!textContent) {
-        return NextResponse.json({ error: 'Gemini no devolvió contenido. Intenta de nuevo.' }, { status: 500 });
+      if (!resolved || !textContent) {
+        return NextResponse.json({ error: `Error de Gemini API: ${lastError}. Intenta con otro modelo.` }, { status: 500 });
       }
     }
 

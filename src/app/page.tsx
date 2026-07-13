@@ -86,7 +86,7 @@ export default function Home() {
 
   // Config state
   const [configStatus, setConfigStatus] = useState<ConfigStatus | null>(null);
-  const [provider, setProvider] = useState('openrouter');
+  const [provider, setProvider] = useState('google');
   const [geminiKey, setGeminiKey] = useState('');
   const [geminiModel, setGeminiModel] = useState('gemini-2.5-flash');
   const [openRouterKey, setOpenRouterKey] = useState('');

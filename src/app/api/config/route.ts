@@ -8,7 +8,7 @@ export async function GET() {
       settings = await db.settings.create({ data: { id: 'main' } });
     }
     return NextResponse.json({
-      provider: settings.provider || 'openrouter',
+      provider: settings.provider || 'google',
       geminiConfigured: !!settings.geminiApiKey,
       geminiModel: settings.geminiModel || 'gemini-2.5-flash',
       openRouterConfigured: !!settings.openRouterKey,
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       config: {
-        provider: updated.provider || 'openrouter',
+        provider: updated.provider || 'google',
         geminiConfigured: !!updated.geminiApiKey,
         geminiModel: updated.geminiModel || 'gemini-2.5-flash',
         openRouterConfigured: !!updated.openRouterKey,
