@@ -119,6 +119,17 @@ export default function Home() {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [expandedHistory, setExpandedHistory] = useState<string | null>(null);
 
+  // Version state
+  const [appVersion, setAppVersion] = useState('1.1.0');
+
+  const fetchVersion = useCallback(async () => {
+    try {
+      const res = await fetch('/api/version');
+      const data = await res.json();
+      if (data.version) setAppVersion(data.version);
+    } catch { /* silent */ }
+  }, []);
+
   const fetchConfig = useCallback(async () => {
     try {
       const res = await fetch('/api/config');
@@ -145,8 +156,9 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    fetchVersion();
     fetchConfig();
-  }, [fetchConfig]);
+  }, [fetchVersion, fetchConfig]);
 
   useEffect(() => {
     if (activeTab === 'historial') {
@@ -333,9 +345,9 @@ export default function Home() {
             </div>
             <div>
               <h1 className="text-base sm:text-lg font-semibold tracking-tight text-foreground">
-                Voces Campesinas
+                SisGelfram
               </h1>
-              <p className="text-xs text-muted-foreground hidden sm:block">Generador de Libretos</p>
+              <p className="text-xs text-muted-foreground hidden sm:block">v{appVersion}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -981,7 +993,7 @@ export default function Home() {
       <footer className="border-t border-border py-4 mt-auto">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-muted-foreground">
           <p>emisora digital Voces Campesinas &middot; www.vocecampesinas.co</p>
-          <p>Generador de Libretos v1.0</p>
+          <p>SisGelfram v{appVersion}</p>
         </div>
       </footer>
     </div>

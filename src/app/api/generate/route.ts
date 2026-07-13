@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${settings.openRouterKey}`,
           'HTTP-Referer': 'https://vocecampesinas.co',
-          'X-Title': 'Voces Campesinas - Generador de Libretos',
+          'X-Title': 'SisGelfram',
         },
         body: JSON.stringify({
           model: orModelId,

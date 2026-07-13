@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Voces Campesinas - Generador de Libretos",
-  description: "Generador de libretos de radio para emisora digital Voces Campesinas",
+  title: "SisGelfram - Generación de Libretos de Radio",
+  description: "Sistema de Generación de Libretos para Franjas de Radio - emisora digital Voces Campesinas",
 };
 
 export default function RootLayout({

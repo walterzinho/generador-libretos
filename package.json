@@ -8,7 +8,7 @@
     "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint .",
     "db:push": "prisma db push",
-    "build": "prisma generate && prisma db push && next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/ && cp -r db .next/standalone/ && cp .env .next/standalone/",
+    "build": "prisma generate && prisma db push && next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/ && cp -r db .next/standalone/ && cp .env .next/standalone/ && cp version.json .next/standalone/",
     "db:setup": "prisma generate && prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset"
