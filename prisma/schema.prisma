@@ -16,6 +16,8 @@ model Settings {
   notionToken   String?
   notionDbId    String?
   notionPageId  String?
+  locutorNombre String?
+  franjaHorario String?
   updatedAt     DateTime @updatedAt
 }
 

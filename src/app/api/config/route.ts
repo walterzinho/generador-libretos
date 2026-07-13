@@ -14,6 +14,8 @@ export async function GET() {
       openRouterConfigured: !!settings.openRouterKey,
       notionConfigured: !!settings.notionToken,
       notionDbReady: !!settings.notionDbId,
+      locutorNombre: settings.locutorNombre || '',
+      franjaHorario: settings.franjaHorario || '',
     });
   } catch (e) {
     return NextResponse.json({ error: `Error al leer configuración: ${e}` }, { status: 500 });
@@ -23,7 +25,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { provider, geminiApiKey, geminiModel, openRouterKey, notionToken } = body;
+    const { provider, geminiApiKey, geminiModel, openRouterKey, notionToken, locutorNombre, franjaHorario } = body;
 
     let settings = await db.settings.findUnique({ where: { id: 'main' } });
     if (!settings) {
@@ -38,6 +40,8 @@ export async function POST(req: NextRequest) {
         ...(geminiModel !== undefined && { geminiModel }),
         ...(openRouterKey !== undefined && { openRouterKey }),
         ...(notionToken !== undefined && { notionToken }),
+        ...(locutorNombre !== undefined && { locutorNombre }),
+        ...(franjaHorario !== undefined && { franjaHorario }),
       },
     });
 
@@ -50,6 +54,8 @@ export async function POST(req: NextRequest) {
         openRouterConfigured: !!updated.openRouterKey,
         notionConfigured: !!updated.notionToken,
         notionDbReady: !!updated.notionDbId,
+        locutorNombre: updated.locutorNombre || '',
+        franjaHorario: updated.franjaHorario || '',
       },
     });
   } catch (e) {

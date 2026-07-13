@@ -92,6 +92,8 @@ export default function Home() {
   const [openRouterKey, setOpenRouterKey] = useState('');
   const [notionToken, setNotionToken] = useState('');
   const [notionPageId, setNotionPageId] = useState('');
+  const [locutorNombre, setLocutorNombre] = useState('');
+  const [franjaHorario, setFranjaHorario] = useState('');
   const [configOpen, setConfigOpen] = useState(false);
   const [savingConfig, setSavingConfig] = useState(false);
   const [creatingDb, setCreatingDb] = useState(false);
@@ -137,6 +139,8 @@ export default function Home() {
       setConfigStatus(data);
       if (data.geminiModel) setGeminiModel(data.geminiModel);
       if (data.provider) setProvider(data.provider);
+      if (data.locutorNombre) setLocutorNombre(data.locutorNombre);
+      if (data.franjaHorario) setFranjaHorario(data.franjaHorario);
     } catch {
       // silent
     }
@@ -172,7 +176,7 @@ export default function Home() {
       const res = await fetch('/api/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider, geminiApiKey: geminiKey, geminiModel, openRouterKey, notionToken: notionToken }),
+        body: JSON.stringify({ provider, geminiApiKey: geminiKey, geminiModel, openRouterKey, notionToken: notionToken, locutorNombre, franjaHorario }),
       });
       const data = await res.json();
       if (data.success) {
@@ -573,6 +577,42 @@ export default function Home() {
                         <CheckCircle2 className="w-3 h-3" /> Base de datos creada y lista
                       </p>
                     )}
+                  </div>
+
+                  <Separator />
+
+                  {/* Locutor / Locutora */}
+                  <div className="space-y-2">
+                    <Label htmlFor="locutorNombre" className="flex items-center gap-2">
+                      <Mic2 className="w-4 h-4 text-primary" />
+                      Nombre del Locutor / Locutora
+                    </Label>
+                    <Input
+                      id="locutorNombre"
+                      placeholder="Ej: Carlos Andrés, María José..."
+                      value={locutorNombre}
+                      onChange={(e) => setLocutorNombre(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Se usará para personalizar saludos y despedidas en los libretos generados.
+                    </p>
+                  </div>
+
+                  {/* Horario de la Franja */}
+                  <div className="space-y-2">
+                    <Label htmlFor="franjaHorario" className="flex items-center gap-2">
+                      <Radio className="w-4 h-4 text-primary" />
+                      Horario de la Franja
+                    </Label>
+                    <Input
+                      id="franjaHorario"
+                      placeholder="Ej: 6:00 AM a 10:00 AM, Lunes a Viernes"
+                      value={franjaHorario}
+                      onChange={(e) => setFranjaHorario(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Se referencia en los libretos para hacerlos más cercanos al momento de emisión.
+                    </p>
                   </div>
 
                   <Separator />

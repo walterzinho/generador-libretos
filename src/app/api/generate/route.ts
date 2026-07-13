@@ -16,7 +16,9 @@ REGLAS FIJAS (NUNCA las rompas):
 TIPOS DE LIBRETO:
 
 ENTRADA (1 a 2 minutos de locución):
-- Saludo de bienvenida con el nombre de la franja.
+- Saludo de bienvenida personalizado con el nombre del locutor/locutora.
+- Nombre de la franja.
+- Referencia al horario exacto de la franja para conectar con el oyente (ej: "son las 6 de la mañana", "en esta tarde de martes").
 - Contexto del momento (mañana, tarde, noche, día de la semana, festividad, clima, etc.), adaptando el tono al horario.
 - Mensaje o reflexión breve que dé personalidad a la franja. Si hay playlist, conéctalo con artistas o canciones. Si no, mantén un tema general y versátil.
 - Mención de lo que se va a escuchar (géneros, artistas, o referencia musical general).
@@ -35,6 +37,8 @@ PUENTE LARGO (30 a 45 segundos):
 
 SALIDA (1 a 2 minutos de locución):
 - Cierre temático de la franja (reflexión, pensamiento, o mensaje final coherente con el horario y género).
+- Despedida personalizada con el nombre del locutor/locutora.
+- Referencia al horario (ej: "nos vemos mañana a las 6", "hasta la próxima noche").
 - Agradecimiento al oyente por la sintonía.
 - Identidad: incluye "emisora digital Voces Campesinas" y "www.vocecampesinas.co".
 - Despedida final.
@@ -54,12 +58,22 @@ function buildUserPrompt(data: {
   incluirPuentesLargos: boolean;
   cantidadPuentesLargos: number;
   playlist: string;
+  locutorNombre: string;
+  franjaHorario: string;
 }): string {
   let prompt = `Genera un paquete de libretos para la siguiente franja:
 
 NOMBRE DE LA FRANJA: ${data.franja}
 GÉNERO(S) MUSICAL(ES): ${data.genero}
 DURACIÓN DE LA FRANJA: ${data.duracion}`;
+
+  if (data.locutorNombre && data.locutorNombre.trim()) {
+    prompt += `\nLOCUTOR/LOCUTORA: ${data.locutorNombre.trim()}`;
+  }
+
+  if (data.franjaHorario && data.franjaHorario.trim()) {
+    prompt += `\nHORARIO DE EMISIÓN: ${data.franjaHorario.trim()}`;
+  }
 
   if (data.playlist && data.playlist.trim()) {
     prompt += `\nPLAYLIST DE REFERENCIA:\n${data.playlist.trim()}`;
@@ -119,6 +133,8 @@ export async function POST(req: NextRequest) {
       incluirPuentesLargos: incluirPuentesLargos || false,
       cantidadPuentesLargos: cantidadPuentesLargos || 2,
       playlist: playlist || '',
+      locutorNombre: settings?.locutorNombre || '',
+      franjaHorario: settings?.franjaHorario || '',
     });
 
     const jsonFormatHint = '\n\nResponde SIEMPRE en este formato JSON exacto:\n{\n  "entradas": [\n    {"numero": 1, "texto": "..."},\n    {"numero": 2, "texto": "..."},\n    {"numero": 3, "texto": "..."},\n    {"numero": 4, "texto": "..."},\n    {"numero": 5, "texto": "..."}\n  ],\n  "puentes": [\n    {"numero": 1, "texto": "..."},\n    ...\n  ],\n  "puentesLargos": [\n    {"numero": 1, "texto": "..."},\n    ...\n  ],\n  "salidas": [\n    {"numero": 1, "texto": "..."},\n    {"numero": 2, "texto": "..."},\n    {"numero": 3, "texto": "..."},\n    {"numero": 4, "texto": "..."},\n    {"numero": 5, "texto": "..."}\n  ]\n}\n\nSi no se pidieron puentes largos, incluye "puentesLargos" como array vacío [].';
