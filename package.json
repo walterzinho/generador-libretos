@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000 2>&1 | tee dev.log",
-    "build": "next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/",
+    "postinstall": "cp -n .env.example .env 2>/dev/null; mkdir -p db; prisma generate",
     "start": "NODE_ENV=production bun .next/standalone/server.js 2>&1 | tee server.log",
     "lint": "eslint .",
     "db:push": "prisma db push",
-    "db:generate": "prisma generate",
+    "build": "prisma generate && prisma db push && next build && cp -r .next/static .next/standalone/.next/ && cp -r public .next/standalone/ && cp -r db .next/standalone/ && cp .env .next/standalone/",
+    "db:setup": "prisma generate && prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset"
   },
