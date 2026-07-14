@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { franja, genero, duracion, cantidadPuentes, incluirPuentesLargos, cantidadPuentesLargos, playlist } = body;
+    const { franja, genero, duracion, cantidadPuentes, incluirPuentesLargos, cantidadPuentesLargos, playlist, locutorNombre, franjaHorario } = body;
 
     if (!franja?.trim() || !genero?.trim()) {
       return NextResponse.json({ error: 'El nombre de la franja y el género son obligatorios.' }, { status: 400 });
@@ -133,8 +133,8 @@ export async function POST(req: NextRequest) {
       incluirPuentesLargos: incluirPuentesLargos || false,
       cantidadPuentesLargos: cantidadPuentesLargos || 2,
       playlist: playlist || '',
-      locutorNombre: settings?.locutorNombre || '',
-      franjaHorario: settings?.franjaHorario || '',
+      locutorNombre: locutorNombre || '',
+      franjaHorario: franjaHorario || '',
     });
 
     const jsonFormatHint = '\n\nResponde SIEMPRE en este formato JSON exacto:\n{\n  "entradas": [\n    {"numero": 1, "texto": "..."},\n    {"numero": 2, "texto": "..."},\n    {"numero": 3, "texto": "..."},\n    {"numero": 4, "texto": "..."},\n    {"numero": 5, "texto": "..."}\n  ],\n  "puentes": [\n    {"numero": 1, "texto": "..."},\n    ...\n  ],\n  "puentesLargos": [\n    {"numero": 1, "texto": "..."},\n    ...\n  ],\n  "salidas": [\n    {"numero": 1, "texto": "..."},\n    {"numero": 2, "texto": "..."},\n    {"numero": 3, "texto": "..."},\n    {"numero": 4, "texto": "..."},\n    {"numero": 5, "texto": "..."}\n  ]\n}\n\nSi no se pidieron puentes largos, incluye "puentesLargos" como array vacío [].';

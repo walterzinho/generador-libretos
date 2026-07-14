@@ -1,8 +1,9 @@
 {
-  "version": "1.2.0",
+  "version": "1.2.1",
   "name": "SisGelfram",
   "description": "Sistema de Generación de Libretos para Franjas de Radio",
   "changelog": [
+    "1.2.1 - 2026-07-14 | Mover locutor y horario al formulario de generación",
     "1.2.0 - 2026-07-13 | Campos de locutor/locutora y horario de franja",
     "1.1.0 - Renombrado a SisGelfram, sistema de versionado dinámico",
     "1.0.0 - Versión inicial: generación de libretos, Notion, historial"

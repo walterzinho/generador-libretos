@@ -139,8 +139,6 @@ export default function Home() {
       setConfigStatus(data);
       if (data.geminiModel) setGeminiModel(data.geminiModel);
       if (data.provider) setProvider(data.provider);
-      if (data.locutorNombre) setLocutorNombre(data.locutorNombre);
-      if (data.franjaHorario) setFranjaHorario(data.franjaHorario);
     } catch {
       // silent
     }
@@ -176,7 +174,7 @@ export default function Home() {
       const res = await fetch('/api/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider, geminiApiKey: geminiKey, geminiModel, openRouterKey, notionToken: notionToken, locutorNombre, franjaHorario }),
+        body: JSON.stringify({ provider, geminiApiKey: geminiKey, geminiModel, openRouterKey, notionToken: notionToken }),
       });
       const data = await res.json();
       if (data.success) {
@@ -254,6 +252,8 @@ export default function Home() {
           incluirPuentesLargos,
           cantidadPuentesLargos,
           playlist,
+          locutorNombre,
+          franjaHorario,
         }),
       });
       const data = await res.json();
@@ -581,42 +581,6 @@ export default function Home() {
 
                   <Separator />
 
-                  {/* Locutor / Locutora */}
-                  <div className="space-y-2">
-                    <Label htmlFor="locutorNombre" className="flex items-center gap-2">
-                      <Mic2 className="w-4 h-4 text-primary" />
-                      Nombre del Locutor / Locutora
-                    </Label>
-                    <Input
-                      id="locutorNombre"
-                      placeholder="Ej: Carlos Andrés, María José..."
-                      value={locutorNombre}
-                      onChange={(e) => setLocutorNombre(e.target.value)}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Se usará para personalizar saludos y despedidas en los libretos generados.
-                    </p>
-                  </div>
-
-                  {/* Horario de la Franja */}
-                  <div className="space-y-2">
-                    <Label htmlFor="franjaHorario" className="flex items-center gap-2">
-                      <Radio className="w-4 h-4 text-primary" />
-                      Horario de la Franja
-                    </Label>
-                    <Input
-                      id="franjaHorario"
-                      placeholder="Ej: 6:00 AM a 10:00 AM, Lunes a Viernes"
-                      value={franjaHorario}
-                      onChange={(e) => setFranjaHorario(e.target.value)}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Se referencia en los libretos para hacerlos más cercanos al momento de emisión.
-                    </p>
-                  </div>
-
-                  <Separator />
-
                   <Button onClick={handleSaveConfig} disabled={savingConfig} className="w-full">
                     {savingConfig ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                     Guardar configuración
@@ -674,6 +638,34 @@ export default function Home() {
                       value={genero}
                       onChange={(e) => setGenero(e.target.value)}
                     />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="locutorNombre" className="flex items-center gap-1.5">
+                        <Mic2 className="w-3.5 h-3.5 text-primary" />
+                        Locutor / Locutora
+                      </Label>
+                      <Input
+                        id="locutorNombre"
+                        placeholder="Ej: Carlos Andrés"
+                        value={locutorNombre}
+                        onChange={(e) => setLocutorNombre(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="franjaHorario" className="flex items-center gap-1.5">
+                        <Radio className="w-3.5 h-3.5 text-primary" />
+                        Horario de emisión
+                      </Label>
+                      <Input
+                        id="franjaHorario"
+                        placeholder="Ej: 6:00 AM a 10:00 AM"
+                        value={franjaHorario}
+                        onChange={(e) => setFranjaHorario(e.target.value)}
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-2">
